@@ -306,9 +306,12 @@ func (opts *ToolboxOptions) LoadConfig(ctx context.Context, parser *ConfigParser
 		return isCustomConfigured, err
 	}
 
+	// Ensure prebuilt toolset description is sent to server instructions only if there is a single prebuilt config and no custom configs are provided.
 	if len(opts.PrebuiltConfigs) == 1 && !isCustomConfigured && len(finalConfig.Groups) == 1 {
 		for _, g := range finalConfig.Groups {
-			finalConfig.Groups[""] = group.GroupConfig{Description: g.Description}
+			if g.Description != "" {
+				finalConfig.Groups[""] = group.GroupConfig{Description: g.Description}
+			}
 		}
 	}
 
