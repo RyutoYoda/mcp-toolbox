@@ -1585,6 +1585,54 @@ text: BBB
 			t.Error("resources map is keyed by config name, want keyed by URI")
 		}
 	})
+	t.Run("resource templates are keyed by URI template", func(t *testing.T) {
+		raw := []byte(`
+kind: resourceTemplate
+name: guides
+type: file
+description: markdown guides
+uriTemplate: file:///guides/{path}
+---
+kind: resourceTemplate
+name: manuals
+type: file
+description: markdown manuals
+uriTemplate: file:///manuals/{path}
+`)
+		_, _, _, _, _, _, resourceTemplateConfigs, _, err := server.UnmarshalPrimitiveConfig(ctx, raw)
+		if err != nil {
+			t.Fatalf("unexpected error parsing config: %s", err)
+		}
+
+		_, _, _, _, _, _, resourceTemplatesMap, _, err := server.InitializeConfigs(ctx, server.ServerConfig{
+			Version:                 "0.0.0",
+			ResourceTemplateConfigs: resourceTemplateConfigs,
+		})
+		if err != nil {
+			t.Fatalf("unexpected error during config initialization: %s", err)
+		}
+
+		wantNamesByURITemplate := map[string]string{
+			"file:///guides/{path}":  "guides",
+			"file:///manuals/{path}": "manuals",
+		}
+		if len(resourceTemplatesMap) != len(wantNamesByURITemplate) {
+			t.Fatalf("resource templates map has %d entries, want %d: %v", len(resourceTemplatesMap), len(wantNamesByURITemplate), resourceTemplatesMap)
+		}
+		for uriTemplate, wantName := range wantNamesByURITemplate {
+			rt, ok := resourceTemplatesMap[uriTemplate]
+			if !ok {
+				t.Fatalf("resource templates map is missing key %q; got %v", uriTemplate, resourceTemplatesMap)
+			}
+			if rt.GetName() != wantName {
+				t.Errorf("resource templates map[%q] has name %q, want %q", uriTemplate, rt.GetName(), wantName)
+			}
+		}
+		// The config name must not be a key, or the re-key silently didn't happen.
+		if _, ok := resourceTemplatesMap["guides"]; ok {
+			t.Error("resource templates map is keyed by config name, want keyed by URI template")
+		}
+	})
 	t.Run("invalid initialization", func(t *testing.T) {
 		invalidCfg := server.ServerConfig{
 			Version: "0.0.0",

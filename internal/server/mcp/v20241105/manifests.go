@@ -201,7 +201,7 @@ func GenerateListResourceTemplatesResult(pMgr *primitives.PrimitiveManager, g gr
 		if !ok {
 			return ListResourceTemplatesResult{}, fmt.Errorf("resource template does not exist: %s", name)
 		}
-		mcpManifest = append(mcpManifest, generateResourceTemplateManifest(name, tmpl.GetDescription(), tmpl.GetURITemplate(), tmpl.GetMimeType()))
+		mcpManifest = append(mcpManifest, generateResourceTemplateManifest(tmpl.GetName(), tmpl.GetDescription(), tmpl.GetURITemplate(), tmpl.GetMimeType()))
 	}
 	return ListResourceTemplatesResult{ResourceTemplates: mcpManifest}, nil
 }

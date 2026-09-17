@@ -116,8 +116,8 @@ func TestGetUIResourcesAndTemplates(t *testing.T) {
 	regularTmpl := testutils.NewMockResourceTemplate("regular-tmpl", "file:///tmpl/{path}", "", "", "", nil)
 	uiTmpl := testutils.NewMockUIResourceTemplate("ui-tmpl", "ui://tmpl/{path}", "", "", "", nil, nil, nil, "", nil)
 	templatesMap := map[string]resources.ResourceTemplate{
-		"regular-tmpl": regularTmpl,
-		"ui-tmpl":      uiTmpl,
+		regularTmpl.GetURITemplate(): regularTmpl,
+		uiTmpl.GetURITemplate():      uiTmpl,
 	}
 
 	primMgr := primitives.NewPrimitiveManager(nil, nil, nil, nil, nil, resourcesMap, templatesMap, nil)
@@ -190,16 +190,65 @@ func TestGetResourcePrefersNameOverURI(t *testing.T) {
 	}
 }
 
-// SetPrimitives is the dynamic-reload path (cmd/root.go), so it has to rebuild
-// the name index alongside the resource map or name lookups go stale.
-func TestSetPrimitivesRebuildsResourceNameIndex(t *testing.T) {
-	before := testutils.NewMockResource("before", "file:///before.md", "", "", "", nil, nil)
-	primMgr := primitives.NewPrimitiveManager(nil, nil, nil, nil, nil,
-		map[string]resources.Resource{before.GetURI(): before}, nil, nil)
+// The resource template map is keyed by URI template, but group configs and a
+// tool's ui.resource field both refer to templates by name, so both have to
+// resolve.
+func TestGetResourceTemplateByNameOrURITemplate(t *testing.T) {
+	tmpl := testutils.NewMockResourceTemplate("my-guides", "file:///guides/{path}", "", "", "", nil)
+	primMgr := primitives.NewPrimitiveManager(nil, nil, nil, nil, nil, nil,
+		map[string]resources.ResourceTemplate{tmpl.GetURITemplate(): tmpl}, nil)
 
-	after := testutils.NewMockResource("after", "file:///after.md", "", "", "", nil, nil)
+	for _, key := range []string{"my-guides", "file:///guides/{path}"} {
+		got, ok := primMgr.GetResourceTemplate(key)
+		if !ok {
+			t.Fatalf("GetResourceTemplate(%q) = not found, want the template", key)
+		}
+		if got.GetName() != "my-guides" {
+			t.Errorf("GetResourceTemplate(%q) returned %q, want %q", key, got.GetName(), "my-guides")
+		}
+	}
+
+	if _, ok := primMgr.GetResourceTemplate("nonexistent"); ok {
+		t.Error("GetResourceTemplate(\"nonexistent\") = found, want not found")
+	}
+}
+
+// Template names are not validated, so a name is allowed to look like a URI
+// template. The name must win, otherwise re-keying the map by URI template would
+// silently redirect an existing config to a different template.
+func TestGetResourceTemplatePrefersNameOverURITemplate(t *testing.T) {
+	// decoy's *name* is the same string as target's *URI template*.
+	target := testutils.NewMockResourceTemplate("target", "skill://guides/{path}", "", "", "", nil)
+	decoy := testutils.NewMockResourceTemplate("skill://guides/{path}", "file:///decoy/{path}", "", "", "", nil)
+	primMgr := primitives.NewPrimitiveManager(nil, nil, nil, nil, nil, nil, map[string]resources.ResourceTemplate{
+		target.GetURITemplate(): target,
+		decoy.GetURITemplate():  decoy,
+	}, nil)
+
+	got, ok := primMgr.GetResourceTemplate("skill://guides/{path}")
+	if !ok {
+		t.Fatal("GetResourceTemplate() = not found, want the decoy template")
+	}
+	if got.GetName() != "skill://guides/{path}" {
+		t.Errorf("GetResourceTemplate() resolved to %q, want the template named %q", got.GetName(), "skill://guides/{path}")
+	}
+}
+
+// SetPrimitives is the dynamic-reload path (cmd/root.go), so it has to rebuild
+// the name indexes alongside the resource and template maps or name lookups go
+// stale.
+func TestSetPrimitivesRebuildsNameIndexes(t *testing.T) {
+	beforeRes := testutils.NewMockResource("before", "file:///before.md", "", "", "", nil, nil)
+	beforeTmpl := testutils.NewMockResourceTemplate("before-tmpl", "file:///before/{path}", "", "", "", nil)
+	primMgr := primitives.NewPrimitiveManager(nil, nil, nil, nil, nil,
+		map[string]resources.Resource{beforeRes.GetURI(): beforeRes},
+		map[string]resources.ResourceTemplate{beforeTmpl.GetURITemplate(): beforeTmpl}, nil)
+
+	afterRes := testutils.NewMockResource("after", "file:///after.md", "", "", "", nil, nil)
+	afterTmpl := testutils.NewMockResourceTemplate("after-tmpl", "file:///after/{path}", "", "", "", nil)
 	primMgr.SetPrimitives(nil, nil, nil, nil, nil,
-		map[string]resources.Resource{after.GetURI(): after}, nil, nil)
+		map[string]resources.Resource{afterRes.GetURI(): afterRes},
+		map[string]resources.ResourceTemplate{afterTmpl.GetURITemplate(): afterTmpl}, nil)
 
 	got, ok := primMgr.GetResource("after")
 	if !ok {
@@ -210,6 +259,17 @@ func TestSetPrimitivesRebuildsResourceNameIndex(t *testing.T) {
 	}
 	if _, ok := primMgr.GetResource("before"); ok {
 		t.Error("GetResource(\"before\") = found, want the stale name to be dropped")
+	}
+
+	gotTmpl, ok := primMgr.GetResourceTemplate("after-tmpl")
+	if !ok {
+		t.Fatal("GetResourceTemplate(\"after-tmpl\") = not found, want the reloaded template")
+	}
+	if gotTmpl.GetName() != "after-tmpl" {
+		t.Errorf("GetResourceTemplate(\"after-tmpl\") returned %q, want %q", gotTmpl.GetName(), "after-tmpl")
+	}
+	if _, ok := primMgr.GetResourceTemplate("before-tmpl"); ok {
+		t.Error("GetResourceTemplate(\"before-tmpl\") = found, want the stale name to be dropped")
 	}
 }
 

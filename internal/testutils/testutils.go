@@ -194,8 +194,9 @@ func SetUpPrimitives(t *testing.T, mockTools []MockTool, mockPrompts []MockPromp
 		allPrompts = append(allPrompts, prompt.Name)
 	}
 
-	// Keyed by URI to match what the server builds at boot; groups still hold
-	// names, so this also exercises the name lookup in PrimitiveManager.
+	// Resources and templates are keyed by URI to match what the server builds at
+	// boot; groups still hold names, so this also exercises the name lookup in
+	// PrimitiveManager.
 	resourcesMap := make(map[string]resources.Resource)
 	var allResources []string
 	for _, resource := range mockResources {
@@ -206,9 +207,8 @@ func SetUpPrimitives(t *testing.T, mockTools []MockTool, mockPrompts []MockPromp
 	resourceTemplatesMap := make(map[string]resources.ResourceTemplate)
 	var allResourceTemplates []string
 	for _, resourceTemplate := range mockResourceTemplates {
-		resTemplateName := resourceTemplate.GetName()
-		resourceTemplatesMap[resTemplateName] = resourceTemplate
-		allResourceTemplates = append(allResourceTemplates, resTemplateName)
+		resourceTemplatesMap[resourceTemplate.GetURITemplate()] = resourceTemplate
+		allResourceTemplates = append(allResourceTemplates, resourceTemplate.GetName())
 	}
 
 	// Build the authoritative groups map directly. Each named collection

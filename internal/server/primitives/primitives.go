@@ -45,6 +45,9 @@ type PrimitiveManager struct {
 	groups            map[string]group.Group
 	// resourceNameIndex maps a resource's name to its URI, the key of resources.
 	resourceNameIndex map[string]string
+	// resourceTemplateNameIndex maps a resource template's name to its URI
+	// template, the key of resourceTemplates.
+	resourceTemplateNameIndex map[string]string
 }
 
 // indexResourceNames builds the name to URI index for the resource map.
@@ -55,6 +58,19 @@ func indexResourceNames(resourcesMap map[string]resources.Resource) map[string]s
 			continue
 		}
 		index[res.GetName()] = uri
+	}
+	return index
+}
+
+// indexResourceTemplateNames builds the name to URI template index for the
+// resource template map.
+func indexResourceTemplateNames(resourceTemplatesMap map[string]resources.ResourceTemplate) map[string]string {
+	index := make(map[string]string, len(resourceTemplatesMap))
+	for uriTemplate, rt := range resourceTemplatesMap {
+		if rt == nil {
+			continue
+		}
+		index[rt.GetName()] = uriTemplate
 	}
 	return index
 }
@@ -70,16 +86,17 @@ func NewPrimitiveManager(
 	groupsMap map[string]group.Group,
 ) *PrimitiveManager {
 	primitiveMgr := &PrimitiveManager{
-		mu:                sync.RWMutex{},
-		sources:           sourcesMap,
-		authServices:      authServicesMap,
-		embeddingModels:   embeddingModelsMap,
-		tools:             toolsMap,
-		prompts:           promptsMap,
-		resources:         resourcesMap,
-		resourceTemplates: resourceTemplatesMap,
-		groups:            groupsMap,
-		resourceNameIndex: indexResourceNames(resourcesMap),
+		mu:                        sync.RWMutex{},
+		sources:                   sourcesMap,
+		authServices:              authServicesMap,
+		embeddingModels:           embeddingModelsMap,
+		tools:                     toolsMap,
+		prompts:                   promptsMap,
+		resources:                 resourcesMap,
+		resourceTemplates:         resourceTemplatesMap,
+		groups:                    groupsMap,
+		resourceNameIndex:         indexResourceNames(resourcesMap),
+		resourceTemplateNameIndex: indexResourceTemplateNames(resourceTemplatesMap),
 	}
 
 	return primitiveMgr
@@ -133,11 +150,16 @@ func (r *PrimitiveManager) GetResource(nameOrURI string) (resources.Resource, bo
 	return resource, ok
 }
 
-// GetResourceTemplate returns a specific resource template by name.
-func (r *PrimitiveManager) GetResourceTemplate(name string) (resources.ResourceTemplate, bool) {
+// GetResourceTemplate returns a specific resource template by name or by URI
+// template. Names are resolved first.
+func (r *PrimitiveManager) GetResourceTemplate(nameOrURITemplate string) (resources.ResourceTemplate, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	rt, exists := r.resourceTemplates[name]
+	if uriTemplate, ok := r.resourceTemplateNameIndex[nameOrURITemplate]; ok {
+		rt, ok := r.resourceTemplates[uriTemplate]
+		return rt, ok
+	}
+	rt, exists := r.resourceTemplates[nameOrURITemplate]
 	return rt, exists
 }
 
@@ -161,6 +183,7 @@ func (r *PrimitiveManager) SetPrimitives(sourcesMap map[string]sources.Source, a
 	r.resourceTemplates = resourceTemplatesMap
 	r.groups = groupsMap
 	r.resourceNameIndex = indexResourceNames(resourcesMap)
+	r.resourceTemplateNameIndex = indexResourceTemplateNames(resourceTemplatesMap)
 }
 
 // AuthServices returns a copy of the auth services map
