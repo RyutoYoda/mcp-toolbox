@@ -2929,6 +2929,12 @@ names, or other parts of the query.&lt;/p&gt;</description></item><item><title>C
 					&lt;td&gt;&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
+					&lt;td&gt;&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;--openai-apps-challenge-file&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;Path to a file containing the OpenAI verification challenge token to serve at &lt;code&gt;/.well-known/openai-apps-challenge&lt;/code&gt;.&lt;/td&gt;
+					&lt;td&gt;&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
 					&lt;td&gt;&lt;code&gt;-p&lt;/code&gt;&lt;/td&gt;
 					&lt;td&gt;&lt;code&gt;--port&lt;/code&gt;&lt;/td&gt;
 					&lt;td&gt;Port the server will listen on.&lt;/td&gt;
@@ -9119,7 +9125,7 @@ and an optional &lt;code&gt;db&lt;/code&gt; parameter.&lt;/p&gt;
 			&lt;/tr&gt;
 	&lt;/tbody&gt;
 &lt;/table&gt;</description></item><item><title>looker-get-dashboard</title><link>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-dashboard/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-dashboard/</guid><description>&lt;h2 id="about"&gt;About&lt;/h2&gt;
-&lt;p&gt;The &lt;code&gt;looker-get-dashboard&lt;/code&gt; tool retrieves the JSON design of a Looker dashboard by its ID. The output is trimmed to essential fields, excluding alerts and scheduled plans, making it suitable for replicating or analyzing the dashboard structure.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;looker-get-dashboard&lt;/code&gt; tool retrieves the JSON design of a Looker dashboard by its ID. The output is trimmed to essential fields (including &lt;code&gt;certification_metadata&lt;/code&gt;), excluding alerts and scheduled plans, making it suitable for replicating or analyzing the dashboard structure.&lt;/p&gt;
 &lt;h2 id="compatible-sources"&gt;Compatible Sources&lt;/h2&gt;
 
 
@@ -9158,7 +9164,7 @@ and an optional &lt;code&gt;db&lt;/code&gt; parameter.&lt;/p&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;source&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l"&gt;looker-source&lt;/span&gt;&lt;span class="w"&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;description&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="sd"&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; This tool retrieves the JSON design of a Looker dashboard by its ID.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; The output is trimmed to essential fields, excluding alerts and scheduled plans,
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; The output is trimmed to essential fields (including certification_metadata), excluding alerts and scheduled plans,
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; making it suitable for replicating or analyzing the dashboard structure.
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; Parameters:
@@ -9195,7 +9201,8 @@ and an optional &lt;code&gt;db&lt;/code&gt; parameter.&lt;/p&gt;
 	&lt;/tbody&gt;
 &lt;/table&gt;</description></item><item><title>looker-get-dashboards</title><link>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-dashboards/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-dashboards/</guid><description>&lt;h2 id="about"&gt;About&lt;/h2&gt;
 &lt;p&gt;The &lt;code&gt;looker-get-dashboards&lt;/code&gt; tool searches for a saved Dashboard by
-name or description.&lt;/p&gt;
+name or description. It returns each dashboard&amp;rsquo;s &lt;code&gt;id&lt;/code&gt;, &lt;code&gt;title&lt;/code&gt;, &lt;code&gt;description&lt;/code&gt;,
+and &lt;code&gt;certification_metadata&lt;/code&gt; (if present).&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;looker-get-dashboards&lt;/code&gt; takes four parameters, the &lt;code&gt;title&lt;/code&gt;, &lt;code&gt;desc&lt;/code&gt;, &lt;code&gt;limit&lt;/code&gt;
 and &lt;code&gt;offset&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Title and description use SQL style wildcards and are case insensitive.&lt;/p&gt;
@@ -9208,86 +9215,7 @@ default to 100 and 0.&lt;/p&gt;
 
 
 &lt;div class="compatibility-section"&gt;
- &lt;p&gt;This tool can be used with the following database sources:&lt;/p&gt;
-
- &lt;table&gt;
- &lt;thead&gt;
- &lt;tr&gt;
- &lt;th&gt;Source Name&lt;/th&gt;
- &lt;/tr&gt;
- &lt;/thead&gt;
- &lt;tbody&gt;
- 
- 
- &lt;tr&gt;
- &lt;td&gt;&lt;a href="https://mcp-toolbox.dev/integrations/looker/source/"&gt;Looker Source&lt;/a&gt;&lt;/td&gt;
- &lt;/tr&gt;
- 
-
- 
-
- 
- 
- &lt;/tbody&gt;
- &lt;/table&gt;
-&lt;/div&gt;
-
-&lt;h2 id="example"&gt;Example&lt;/h2&gt;
-&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;kind&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l"&gt;tool&lt;/span&gt;&lt;span class="w"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;name&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l"&gt;get_dashboards&lt;/span&gt;&lt;span class="w"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;type&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l"&gt;looker-get-dashboards&lt;/span&gt;&lt;span class="w"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;source&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l"&gt;looker-source&lt;/span&gt;&lt;span class="w"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;description&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="sd"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; This tool searches for saved dashboards in a Looker instance. It returns a list of JSON objects, each representing a dashboard.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; Search Parameters:
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - title (optional): Filter by dashboard title (supports wildcards).
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - folder_id (optional): Filter by the ID of the folder where the dashboard is saved.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - user_id (optional): Filter by the ID of the user who created the dashboard.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - description (optional): Filter by description content (supports wildcards).
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - id (optional): Filter by specific dashboard ID.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - limit (optional): Maximum number of results to return. Defaults to a system limit.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - offset (optional): Starting point for pagination.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; String Search Behavior:
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - Case-insensitive matching.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - Supports SQL LIKE pattern match wildcards:
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - `%`: Matches any sequence of zero or more characters. (e.g., `&amp;#34;finan%&amp;#34;` matches &amp;#34;financial&amp;#34;, &amp;#34;finance&amp;#34;)
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - `_`: Matches any single character. (e.g., `&amp;#34;s_les&amp;#34;` matches &amp;#34;sales&amp;#34;)
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - Special expressions for null checks:
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - `&amp;#34;IS NULL&amp;#34;`: Matches dashboards where the field is null.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - `&amp;#34;NOT NULL&amp;#34;`: Excludes dashboards where the field is null.&lt;/span&gt;&lt;span class="w"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="reference"&gt;Reference&lt;/h2&gt;
-&lt;table&gt;
-	&lt;thead&gt;
-			&lt;tr&gt;
-					&lt;th&gt;&lt;strong&gt;field&lt;/strong&gt;&lt;/th&gt;
-					&lt;th style="text-align: center"&gt;&lt;strong&gt;type&lt;/strong&gt;&lt;/th&gt;
-					&lt;th style="text-align: center"&gt;&lt;strong&gt;required&lt;/strong&gt;&lt;/th&gt;
-					&lt;th&gt;&lt;strong&gt;description&lt;/strong&gt;&lt;/th&gt;
-			&lt;/tr&gt;
-	&lt;/thead&gt;
-	&lt;tbody&gt;
-			&lt;tr&gt;
-					&lt;td&gt;type&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;string&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;true&lt;/td&gt;
-					&lt;td&gt;Must be &amp;ldquo;looker-get-dashboards&amp;rdquo;&lt;/td&gt;
-			&lt;/tr&gt;
-			&lt;tr&gt;
-					&lt;td&gt;source&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;string&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;true&lt;/td&gt;
-					&lt;td&gt;Name of the source the SQL should execute on.&lt;/td&gt;
-			&lt;/tr&gt;
-			&lt;tr&gt;
-					&lt;td&gt;description&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;string&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;true&lt;/td&gt;
-					&lt;td&gt;Description of the tool that is passed to the LLM.&lt;/td&gt;
-			&lt;/tr&gt;
-	&lt;/tbody&gt;
-&lt;/table&gt;</description></item><item><title>looker-get-dimensions</title><link>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-dimensions/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-dimensions/</guid><description>&lt;h2 id="about"&gt;About&lt;/h2&gt;
+ &lt;p&gt;This tool can be used with the following database sources:&lt;/p&gt;</description></item><item><title>looker-get-dimensions</title><link>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-dimensions/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-dimensions/</guid><description>&lt;h2 id="about"&gt;About&lt;/h2&gt;
 &lt;p&gt;A &lt;code&gt;looker-get-dimensions&lt;/code&gt; tool returns all the dimensions from a given explore
 in a given model in the source.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;looker-get-dimensions&lt;/code&gt; accepts two parameters, the &lt;code&gt;model&lt;/code&gt; and the &lt;code&gt;explore&lt;/code&gt;.&lt;/p&gt;
@@ -9579,7 +9507,8 @@ in a given model in the source.&lt;/p&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - explore_name (required): The name of the explore within the model, obtained from `get_explores`.&lt;/span&gt;&lt;span class="w"&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The response is a json array with the following elements:&lt;/p&gt;</description></item><item><title>looker-get-looks</title><link>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-looks/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-looks/</guid><description>&lt;h2 id="about"&gt;About&lt;/h2&gt;
 &lt;p&gt;The &lt;code&gt;looker-get-looks&lt;/code&gt; tool searches for a saved Look by
-name or description.&lt;/p&gt;
+name or description. It returns each Look&amp;rsquo;s &lt;code&gt;id&lt;/code&gt;, &lt;code&gt;title&lt;/code&gt;, &lt;code&gt;description&lt;/code&gt;,
+&lt;code&gt;model_id&lt;/code&gt;, and &lt;code&gt;certification_metadata&lt;/code&gt; (if present).&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;looker-get-looks&lt;/code&gt; takes four parameters, the &lt;code&gt;title&lt;/code&gt;, &lt;code&gt;desc&lt;/code&gt;, &lt;code&gt;limit&lt;/code&gt;
 and &lt;code&gt;offset&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Title and description use SQL style wildcards and are case insensitive.&lt;/p&gt;
@@ -9592,87 +9521,7 @@ default to 100 and 0.&lt;/p&gt;
 
 
 &lt;div class="compatibility-section"&gt;
- &lt;p&gt;This tool can be used with the following database sources:&lt;/p&gt;
-
- &lt;table&gt;
- &lt;thead&gt;
- &lt;tr&gt;
- &lt;th&gt;Source Name&lt;/th&gt;
- &lt;/tr&gt;
- &lt;/thead&gt;
- &lt;tbody&gt;
- 
- 
- &lt;tr&gt;
- &lt;td&gt;&lt;a href="https://mcp-toolbox.dev/integrations/looker/source/"&gt;Looker Source&lt;/a&gt;&lt;/td&gt;
- &lt;/tr&gt;
- 
-
- 
-
- 
- 
- &lt;/tbody&gt;
- &lt;/table&gt;
-&lt;/div&gt;
-
-&lt;h2 id="example"&gt;Example&lt;/h2&gt;
-&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;kind&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l"&gt;tool&lt;/span&gt;&lt;span class="w"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;name&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l"&gt;get_looks&lt;/span&gt;&lt;span class="w"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;type&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l"&gt;looker-get-looks&lt;/span&gt;&lt;span class="w"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;source&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l"&gt;looker-source&lt;/span&gt;&lt;span class="w"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;description&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="sd"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; This tool searches for saved Looks (pre-defined queries and visualizations)
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; in a Looker instance. It returns a list of JSON objects, each representing a Look.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; Search Parameters:
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - title (optional): Filter by Look title (supports wildcards).
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - folder_id (optional): Filter by the ID of the folder where the Look is saved.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - user_id (optional): Filter by the ID of the user who created the Look.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - description (optional): Filter by description content (supports wildcards).
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - id (optional): Filter by specific Look ID.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - limit (optional): Maximum number of results to return. Defaults to a system limit.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - offset (optional): Starting point for pagination.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; String Search Behavior:
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - Case-insensitive matching.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - Supports SQL LIKE pattern match wildcards:
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - `%`: Matches any sequence of zero or more characters. (e.g., `&amp;#34;dan%&amp;#34;` matches &amp;#34;danger&amp;#34;, &amp;#34;Danzig&amp;#34;)
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - `_`: Matches any single character. (e.g., `&amp;#34;D_m%&amp;#34;` matches &amp;#34;Damage&amp;#34;, &amp;#34;dump&amp;#34;)
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - Special expressions for null checks:
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - `&amp;#34;IS NULL&amp;#34;`: Matches Looks where the field is null.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="sd"&gt; - `&amp;#34;NOT NULL&amp;#34;`: Excludes Looks where the field is null.&lt;/span&gt;&lt;span class="w"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="reference"&gt;Reference&lt;/h2&gt;
-&lt;table&gt;
-	&lt;thead&gt;
-			&lt;tr&gt;
-					&lt;th&gt;&lt;strong&gt;field&lt;/strong&gt;&lt;/th&gt;
-					&lt;th style="text-align: center"&gt;&lt;strong&gt;type&lt;/strong&gt;&lt;/th&gt;
-					&lt;th style="text-align: center"&gt;&lt;strong&gt;required&lt;/strong&gt;&lt;/th&gt;
-					&lt;th&gt;&lt;strong&gt;description&lt;/strong&gt;&lt;/th&gt;
-			&lt;/tr&gt;
-	&lt;/thead&gt;
-	&lt;tbody&gt;
-			&lt;tr&gt;
-					&lt;td&gt;type&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;string&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;true&lt;/td&gt;
-					&lt;td&gt;Must be &amp;ldquo;looker-get-looks&amp;rdquo;&lt;/td&gt;
-			&lt;/tr&gt;
-			&lt;tr&gt;
-					&lt;td&gt;source&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;string&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;true&lt;/td&gt;
-					&lt;td&gt;Name of the source the SQL should execute on.&lt;/td&gt;
-			&lt;/tr&gt;
-			&lt;tr&gt;
-					&lt;td&gt;description&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;string&lt;/td&gt;
-					&lt;td style="text-align: center"&gt;true&lt;/td&gt;
-					&lt;td&gt;Description of the tool that is passed to the LLM.&lt;/td&gt;
-			&lt;/tr&gt;
-	&lt;/tbody&gt;
-&lt;/table&gt;</description></item><item><title>looker-get-measures</title><link>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-measures/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-measures/</guid><description>&lt;h2 id="about"&gt;About&lt;/h2&gt;
+ &lt;p&gt;This tool can be used with the following database sources:&lt;/p&gt;</description></item><item><title>looker-get-measures</title><link>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-measures/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://mcp-toolbox.dev/integrations/looker/tools/looker-get-measures/</guid><description>&lt;h2 id="about"&gt;About&lt;/h2&gt;
 &lt;p&gt;A &lt;code&gt;looker-get-measures&lt;/code&gt; tool returns all the measures from a given explore
 in a given model in the source.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;looker-get-measures&lt;/code&gt; accepts two parameters, the &lt;code&gt;model&lt;/code&gt; and the &lt;code&gt;explore&lt;/code&gt;.&lt;/p&gt;
@@ -11270,7 +11119,7 @@ returned. Otherwise, the selection is not guaranteed.&lt;/p&gt;
 &lt;p&gt;The tool returns a single JSON object representing the document, wrapped in a
 JSON array.&lt;/p&gt;
 &lt;h2 id="compatible-sources"&gt;Compatible Sources&lt;/h2&gt;
-&lt;h2 id="hahahugoshortcode304s0hbhb"&gt;
+&lt;h2 id="hahahugoshortcode544s0hbhb"&gt;
 
 
 

@@ -64,6 +64,12 @@
 					&lt;td&gt;&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
+					&lt;td&gt;&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;--openai-apps-challenge-file&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;Path to a file containing the OpenAI verification challenge token to serve at &lt;code&gt;/.well-known/openai-apps-challenge&lt;/code&gt;.&lt;/td&gt;
+					&lt;td&gt;&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
 					&lt;td&gt;&lt;code&gt;-p&lt;/code&gt;&lt;/td&gt;
 					&lt;td&gt;&lt;code&gt;--port&lt;/code&gt;&lt;/td&gt;
 					&lt;td&gt;Port the server will listen on.&lt;/td&gt;
