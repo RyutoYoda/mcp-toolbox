@@ -1,81 +1,73 @@
 ---
 name: docsite-link-sweep
 description: >-
-  Sweep the googleapis/mcp-toolbox docs for broken and non-canonical links, report
-  every finding with the reason it breaks, and land the fixes for the safe class of
-  internal docsite links. Use whenever a maintainer asks for a link sweep, a docs
-  health check, or triage of the weekly "Link Checker Report" issue, e.g. "check the
-  docs for broken links", "link sweep", "the link checker is red on #3711", "fix the
-  dead links in docs/", or after a docs reorg, page rename, or directory move.
-  Edits the working tree and leaves a ready commit; never pushes, never opens a PR,
-  and never rewrites external links or ambiguous targets on its own.
+  Sweep the googleapis/mcp-toolbox docs for broken and non-canonical links, report each
+  finding with the reason it breaks, and apply the safe class of internal link fixes. Use
+  when a maintainer asks for a link sweep or docs health check, triages the weekly "Link
+  Checker Report" issue, or after a docs reorg, page rename, or directory move, e.g. "check
+  the docs for broken links", "link sweep", "fix the dead links in docs/". Edits the working
+  tree and leaves a commit; never pushes, never opens a PR, and never rewrites external links
+  or ambiguous targets.
 ---
 
 # Docsite Link Sweep (mcp-toolbox)
 
-Two checkers guard these docs and neither is sufficient alone.
+Two checkers guard these docs and neither is sufficient alone. **lychee**, the repo's configured
+checker, resolves links as filesystem paths and knows nothing about Hugo. **Hugo**, which builds
+the site, resolves `.md` links to pretty URLs and generates whole classes of links from shortcodes,
+but never checks an external URL. A link can pass one and break the other.
 
-- **lychee** is what CI runs. It resolves links as filesystem paths and knows nothing about Hugo.
-- **Hugo** is what builds the site. It resolves `.md` links to pretty URLs and generates whole
-  classes of links from shortcodes, but never checks an external URL.
-
-A link can pass one and break the other, which is why `.github/workflows/link_checker.yaml` warns
-contributors that a fix must satisfy both. So the value of a sweep is not the lychee output, which
-anyone can get by re-running the job. It is deciding which failures are real breakage, which are
-the two checkers disagreeing, and which single rewrite satisfies both.
-
-## Goal
-
-A report the maintainer can act on in one sitting: every finding sorted into fixed,
-needs-a-decision, external, or ignore-worthy, each with its `file:line` and the reason it breaks.
-The safe class is already applied and verified, on a branch with a commit message, ready to push.
+So the value of a sweep is not the lychee output. It is deciding which failures are real breakage,
+which are the two checkers disagreeing, and which single rewrite satisfies both.
 
 ## Prerequisites
 
 - **Hugo Extended v0.146.0+.** Without a build you cannot see shortcode-generated links.
 - **lychee**, if available (`brew install lychee`, or `docker run --rm -v "$PWD:/input"
   lycheeverse/lychee`). Without it, run the grep and build passes only and say so in the report.
-- **A clean tree.** Run `git status` first and stop if docs have uncommitted changes. You cannot
-  hand back a reviewable commit sitting on top of someone's work in progress.
+- **A clean tree.** Stop if docs have uncommitted changes: you cannot hand back a reviewable commit
+  sitting on top of someone's work in progress.
 - **A scope.** Default to `README.md` plus `docs/`, matching the weekly job.
 
 ## Workflow
 
 ### Step 1: Read the source of truth
 
-Read these live. They move, so this file deliberately does not restate them.
-
-- [`references/DEVELOPER.md`](references/DEVELOPER.md), section "Link Checking and Fixing with
-  Lychee": authoritative for the canonical link form, and for when an ignore entry is legitimate.
-  Cite it as `DEVELOPER.md` in your output; the symlink path means nothing to a reader.
+- [`references/DEVELOPER.md`](references/DEVELOPER.md), "Link Checking and Fixing with Lychee":
+  canonical link form, and when an ignore entry is legitimate. Cite it as `DEVELOPER.md`; the
+  symlink path means nothing to a reader.
 - [`.lycheeignore`](https://github.com/googleapis/mcp-toolbox/blob/main/.lycheeignore): what is
   already excluded, and why. Every entry carries a comment, and yours must too.
-- [`.github/workflows/link_checker.yaml`](https://github.com/googleapis/mcp-toolbox/blob/main/.github/workflows/link_checker.yaml)
-  (per PR, changed files only) and
+- [`link_checker.yaml`](https://github.com/googleapis/mcp-toolbox/blob/main/.github/workflows/link_checker.yaml)
+  (per PR, changed files) and
   [`link_checker_report.yaml`](https://github.com/googleapis/mcp-toolbox/blob/main/.github/workflows/link_checker_report.yaml)
-  (weekly cron over `README.md` and `docs/`, files an issue titled "Link Checker Report"). Take the
-  lychee args from the file rather than from this skill.
-- [`references/link-forms.md`](references/link-forms.md): the file-path-to-URL mapping, the
-  shortcodes that generate links, and the traps that make a naive checker wrong on this repo.
+  (weekly, over `README.md` and `docs/`, files the "Link Checker Report" issue). Take the lychee
+  args from the file, not from this skill. **Both have been disabled before**, so confirm they are
+  running rather than assuming CI caught anything:
 
-### Step 2: Reproduce what CI sees
+  ```bash
+  gh api repos/googleapis/mcp-toolbox/actions/workflows --paginate \
+    -q '.workflows[] | select(.path|test("link")) | .path + "  " + .state'
+  ```
+
+  When they are disabled, this sweep is the repo's only link checking and nothing has been checked
+  since they were turned off. Say so in the report.
+- [`references/link-forms.md`](references/link-forms.md): path-to-URL mapping, the shortcodes that
+  generate links, and the traps that make a naive checker wrong here.
+
+### Step 2: Run the configured check yourself
 
 ```bash
 lychee --quiet --no-progress --exclude '^neo4j\+.*' --exclude '^bolt://.*' README.md docs/
-```
 
-For a PR-scoped sweep, restrict to changed files the way the PR job does:
-
-```bash
+# PR-scoped: the file list the PR job builds
 git diff --name-only --diff-filter=ACMRT origin/main...HEAD -- '*.md'
 ```
 
-Reproduce before fixing anything. A finding that will not reproduce locally is usually an external
-flake or a cache artifact, so it belongs in the external bucket rather than the fix list.
+Reproduce before fixing. A finding that will not reproduce locally is usually an external flake or
+a cache artifact, so it belongs in the external bucket rather than the fix list.
 
 ### Step 3: Find what lychee structurally cannot
-
-lychee greps markdown, so these break the site while passing CI:
 
 ```bash
 # Directory-style relative links: Hugo resolves them, lychee cannot.
@@ -87,97 +79,84 @@ grep -rnE "\]\(/[^)]*\)" docs/en --include=*.md
 # Absolute self-links: the same version leak, and they 404 before a page ships to root.
 grep -rn "https://mcp-toolbox.dev/" docs/en --include=*.md
 
-# Section indexes missing `type: docs` can render with no child links at all: a dead
-# end that contains no broken link. This was issue #3752.
+# Section indexes missing `type: docs` render with no child links: a dead end
+# containing no broken link (issue #3752).
 find docs/en -name _index.md -exec grep -L "^type: docs" {} +
 ```
 
-That last one lists candidates, not defects, and currently matches dozens of files. A page that
-sets `no_list: true` or renders its own listing shortcode (`{{< samples-gallery >}}`,
-`{{< list-tools >}}`) is deliberate. Open each hit and confirm the built page really has no way
-down to its children before reporting it.
+The last one lists candidates, not defects, and matches dozens of files. A page setting
+`no_list: true` or rendering its own listing shortcode is deliberate. Open each hit and confirm the
+built page has no way down to its children before reporting it.
 
-Then build and crawl, which is the only way to see shortcode-generated links:
+Then build and crawl, the only way to see shortcode-generated links:
 
 ```bash
 cd .hugo && hugo --minify --config hugo.cloudflare.toml
 lychee --offline --base-url public public   # run `lychee --help`; this flag has been renamed across versions
 ```
 
-A page whose tool list comes from `{{< list-tools >}}` or `{{< compatible-sources >}}` has no link
-in its markdown at all. Delete a target page and the shortcode silently renders one row fewer: no
-error, no broken link, just missing content. Only the built HTML shows it.
+Delete a page that `{{< list-tools >}}` or `{{< compatible-sources >}}` feeds and the shortcode
+renders one row fewer: no error, no broken link, just missing content. `link-forms.md` has the
+full set.
 
 ### Step 4: Classify before you touch anything
 
-Put every finding in exactly one bucket. Only the first is yours to fix.
+Every finding goes in exactly one bucket. Only the first is yours to fix.
 
 **Safe to fix.** Mechanical, one correct answer, verifiable both ways:
 
-1. Directory-style relative link, rewritten to the same target in `.md` form.
-2. Site-absolute `](/some/path/)`, rewritten to a file-relative `.md` path.
-3. Absolute `https://mcp-toolbox.dev/...` self-link, rewritten to a file-relative `.md` path.
+1. Directory-style relative link → the same target in `.md` form.
+2. Site-absolute `](/some/path/)` → file-relative `.md` path.
+3. Absolute `https://mcp-toolbox.dev/...` self-link → file-relative `.md` path.
 4. A moved target where `git log --diff-filter=D --name-only` or `git log --follow` names exactly
    one successor.
 5. Anchor drift where the heading was renamed in this repo and the new heading is unambiguous.
 
-**Needs a decision.** Report with a recommendation, but do not apply:
+**Needs a decision.** Report with a recommendation, do not apply:
 
-- A target that exists nowhere. Writing the missing page and deleting the link are both defensible,
-  so it is the maintainer's call.
+- A target that exists nowhere: writing the page and deleting the link are both defensible.
 - A move with more than one plausible successor, such as a page split in two.
 - A link into a path listed in `ignoreFiles` in
-  [`.hugo/hugo.toml`](https://github.com/googleapis/mcp-toolbox/blob/main/.hugo/hugo.toml). Those files exist on disk, so
-  lychee is happy, but Hugo never builds them into pages and the link 404s on the site.
-- A section confirmed to be a dead end for want of `type: docs`. Give the one-line frontmatter
-  patch and let the maintainer apply it, since it changes how the whole page renders rather than
-  just a link.
+  [`.hugo/hugo.toml`](https://github.com/googleapis/mcp-toolbox/blob/main/.hugo/hugo.toml). The file
+  exists on disk so lychee is happy, but Hugo never builds it and the link 404s on the site.
+- A section confirmed dead for want of `type: docs`. Give the frontmatter patch and let the
+  maintainer apply it; it changes how the whole page renders, not just a link.
 
-**External.** Report the status code and `file:line`, and propose only a fix direction. Guessing a
-replacement URL for a dead third-party link swaps a visibly broken link for a plausible-looking
-wrong one.
+**External.** Report the status code and `file:line`, and propose only a direction. Guessing a
+replacement URL swaps a visibly broken link for a plausible-looking wrong one.
 
 **Ignore-worthy.** Rate-limited, auth-walled, or local-only URLs. Propose a `.lycheeignore` entry
-with its explanatory comment. Treat this as a last resort: an ignore entry hides the link from
-every future sweep, so anything you ignore is something nobody checks again.
+with its comment. Last resort: an ignore entry hides the link from every future sweep.
 
-### Step 5: Rewrite to the one form that satisfies both checkers
+### Step 5: Rewrite to the form that satisfies both checkers
 
-The canonical form is **file-relative, with the `.md` extension**. lychee finds the physical file
-and Hugo resolves it to the pretty URL, from the same string.
+File-relative, with the `.md` extension: lychee finds the physical file and Hugo resolves the same
+string to the pretty URL. Compute the path from the *linking file's* directory, remembering that
+`docs/en` is mounted at the site root with no `/en/` and no `/docs/` segment.
 
-Compute the path from the *linking file's* directory, remembering that `docs/en` is mounted at the
-site root with no `/en/` and no `/docs/` segment. Two traps produce a wrong-but-plausible path:
-
-- **`_index.md` is the section itself**, not a sibling. A link to a section points at
-  `../configuration/_index.md`, so a page promoted from a leaf file to a directory breaks every
-  link still naming the old leaf.
-- **`getting-started` is ambiguous.** Both `docs/en/getting-started/` and
-  `docs/en/documentation/getting-started/` exist, so `../getting-started/` means different things
-  at different depths. Resolve it against the actual file, never by matching the name.
+Two traps produce a wrong-but-plausible path, both detailed in `link-forms.md`: `_index.md` is the
+section itself rather than a sibling, and `getting-started` names two different directories.
 
 ### Step 6: Verify every fix both ways
 
 ```bash
 lychee --quiet --no-progress --offline <the files you changed>   # lychee finds the file
-cd .hugo && hugo --environment development                        # Hugo builds with no ref errors
+cd .hugo && hugo --environment development                       # Hugo builds with no ref errors
 ```
 
 Then confirm the rendered `href` in `public/` points where you intended. A relative path can be
 wrong by one directory level and still resolve to a real file.
 
-If a fix touches a renamed or moved page, check whether `aliases:` frontmatter belongs at the new
-location so the old URL keeps working. The repo has the pattern (see the Knowledge Catalog pages)
-but most moves forget it, so raise it explicitly rather than assuming it was decided against.
+If a fix touches a renamed or moved page, raise whether `aliases:` frontmatter belongs at the new
+location so the old URL keeps working. The repo has the pattern but most moves forget it, so treat
+a missing alias as an oversight rather than a decision already made.
 
 ### Step 7: Land the change, and stop
 
 - Branch `docs/fix-docsite-links`, scoped further if the sweep was.
-- One commit: `docs: fix broken docsite links`.
-- Safe-class fixes only. No drive-by wording edits, no reformatting, nothing from the decision
-  bucket.
-- **Stop before pushing.** Report the branch name and the command to run. Never `git push` or
-  `gh pr create`.
+- One commit, `docs: fix broken docsite links`, safe-class fixes only: no drive-by wording edits,
+  no reformatting, nothing from the decision bucket.
+- Report the branch name and the command to run. Never `git push` or `gh pr create`.
 
 ## Rules
 
@@ -187,8 +166,7 @@ but most moves forget it, so raise it explicitly rather than assuming it was dec
   not exist goes in the decision bucket even when the intended page seems obvious.
 - **One reason per finding**, with `file:line`. "Broken" is not a reason; "directory-style link,
   lychee cannot resolve it" is.
-- **Never ignore an internal link.** Ignore entries are for external URLs only, always with a
-  comment.
+- **Never ignore an internal link.** Ignore entries are for external URLs only, always commented.
 - **Disclose the edges of the sweep**: the scope, whether you built the site or only grepped, and
   anything you skipped. Silence about coverage reads as "I checked everything."
 - **Mark anything unverified** `[UNVERIFIED]` rather than asserting it.
@@ -212,15 +190,13 @@ Checked: lychee over <scope> | built site: <yes/no> | <N> files changed
 | pattern | why |
 
 **Structural** (<n>)
-- <file>: <e.g. missing `type: docs`, section renders no child links>
+- <file>: <e.g. missing `type: docs`, renders no child links>
 
 **Apply:**
 git push -u origin docs/fix-docsite-links
 gh pr create --title "docs: fix broken docsite links"
 ```
 
-- **Empty buckets:** omit them, except **Needs your decision**, which is always stated even when
-  empty. "Nothing here needs a judgment call" tells the maintainer the branch is safe to skim
-  rather than audit.
-- **Large sweeps:** lead with the per-bucket counts and fix in batches, so the maintainer chooses
-  how deep to go before reading a hundred rows.
+Omit empty buckets, except **Needs your decision**, which is stated even when empty: "nothing here
+needs a judgment call" tells the maintainer the branch is safe to skim rather than audit. For large
+sweeps, lead with the per-bucket counts and fix in batches.

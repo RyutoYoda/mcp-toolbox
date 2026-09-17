@@ -1,22 +1,14 @@
 # Link forms, path mapping, and the traps
 
-Background for the `docsite-link-sweep` skill: how a file path in `docs/en` becomes a URL on
-`mcp-toolbox.dev`, and the structures that make a naive link checker wrong on this repo. Config
-values move, so verify anything load-bearing against `.hugo/hugo.toml` and the workflow files.
+How a file path in `docs/en` becomes a URL on `mcp-toolbox.dev`, and the structures that make a
+naive link checker wrong here. Config moves, so verify anything load-bearing against
+`.hugo/hugo.toml` and the workflow files.
 
 ## File path to URL
 
-`docs/en` is mounted at the site root:
-
-```toml
-# .hugo/hugo.toml
-[[module.mounts]]
-  source = "../docs/en"
-  target = 'content'
-```
-
-With `defaultContentLanguage = "en"` and `defaultContentLanguageInSubdir = false`, **no URL has an
-`/en/` or `/docs/` segment**. `uglyURLs` is unset, so URLs are pretty.
+`.hugo/hugo.toml` mounts `../docs/en` as `content`. With `defaultContentLanguage = "en"` and
+`defaultContentLanguageInSubdir = false`, **no URL has an `/en/` or `/docs/` segment**. `uglyURLs`
+is unset, so URLs are pretty.
 
 | File | URL |
 | --- | --- |
@@ -24,22 +16,20 @@ With `defaultContentLanguage = "en"` and `defaultContentLanguageInSubdir = false
 | `docs/en/documentation/_index.md` | `/documentation/` |
 | `docs/en/integrations/postgres/source.md` | `/integrations/postgres/source/` |
 
-The `aliases:` frontmatter on the Knowledge Catalog pages confirms this: it is written
-site-absolute with no `/en/` prefix.
+The `aliases:` frontmatter on the Knowledge Catalog pages confirms it: site-absolute, no `/en/`.
 
 ## The canonical link form
 
-File-relative, with the `.md` extension. `DEVELOPER.md` is authoritative; the short version is that
-one string satisfies both checkers, because lychee resolves it as a filesystem path and Hugo
-resolves it to the pretty URL.
+File-relative with the `.md` extension, per the authoritative `DEVELOPER.md`. One string satisfies
+both checkers: lychee resolves it as a filesystem path, Hugo resolves it to the pretty URL.
 
-- Directory-style links (`](../mcp-apps/)`) render correctly in Hugo and fail lychee.
-- Site-absolute links (`](/reference/cli/)`) pass lychee and break on versioned deploys.
+- Directory-style (`](../mcp-apps/)`) renders in Hugo, fails lychee.
+- Site-absolute (`](/reference/cli/)`) passes lychee, breaks on versioned deploys.
 
-Counts drift, so run the greps in the skill rather than trusting a number here. Rough orientation
-at the time of writing: file-relative `.md` dominates by roughly 4:1 over directory-style,
-site-absolute links number in the single digits, `{{< relref >}}` is not used at all, and the only
-two `{{< ref >}}` usages are in the Firestore validate-rules page.
+Counts drift, so run the skill's greps rather than trusting numbers here. Rough orientation at the
+time of writing: file-relative `.md` leads directory-style by about 4:1, site-absolute links are in
+single digits, `{{< relref >}}` is unused, and the only two `{{< ref >}}` usages are in the
+Firestore validate-rules page.
 
 ## Why site-absolute links leak across versions
 
@@ -53,18 +43,16 @@ a different base:
 | PR preview | `/` |
 
 So `](/reference/cli/)` on the `/dev/` build resolves to `mcp-toolbox.dev/reference/cli/`, the
-*latest-release* docs rather than dev. Every archived version build leaks the same way. Absolute
-`https://mcp-toolbox.dev/...` self-links have the mirror-image problem: an archived `/v1.5.0/` page
-silently links forward to current docs.
-
-No markdown file hardcodes a versioned path today. The risk is the opposite: unversioned absolute
-links that always mean "latest".
+*latest-release* docs rather than dev; every archived build leaks the same way. Absolute
+`https://mcp-toolbox.dev/...` self-links fail in mirror image, an archived `/v1.5.0/` page silently
+linking forward to current docs. No markdown file hardcodes a versioned path today; the risk is the
+opposite, unversioned absolute links that always mean "latest".
 
 ## Links that exist only in rendered HTML
 
-These shortcodes build `<a href>` from `.RelPermalink`. The markdown contains no link at all, so a
-grep-based checker sees a page with no outbound links, and sees nothing when a target is deleted.
-The shortcode just renders one row fewer.
+These shortcodes build `<a href>` from `.RelPermalink`, so the markdown holds no link. A
+grep-based checker sees a page with no outbound links, and sees nothing when a target is deleted:
+the shortcode just renders one row fewer.
 
 | Shortcode | Roughly how widely used | What it generates |
 | --- | --- | --- |
@@ -88,18 +76,18 @@ Building the site and crawling `public/` is the only way to check any of this.
 ## Traps
 
 - **`ignoreFiles`.** `.hugo/hugo.toml` lists several `quickstart/` paths. They exist on disk, so
-  lychee resolves links to them happily, but Hugo never builds them into pages. The link 404s on
-  the live site and passes CI forever.
+  lychee resolves links to them happily, but Hugo never builds them into pages. The link 404s live
+  and passes CI forever.
 - **Missing `type: docs`.** A section `_index.md` without it gets the Docsy default layout instead
-  of `.hugo/layouts/docs/section.html`, which is what lists child pages. The page renders with
-  chrome and zero child links: a dead end containing no broken link. This hit 47 integration index
-  pages (issue #3752, fixed in `59fb2c42180`).
+  of `.hugo/layouts/docs/section.html`, which is what lists child pages. The result is chrome with
+  zero child links: a dead end containing no broken link. This hit 47 integration index pages
+  (issue #3752, fixed in `59fb2c42180`).
 - **Leaf-to-section promotion.** When a page becomes a directory, `foo.md` turns into
   `foo/_index.md` and every link naming the old leaf breaks. See `c63efb0568c`, which rewrote
   `../configure.md` to `../configuration/_index.md`.
 - **Two `getting-started` directories.** `docs/en/getting-started/` and
-  `docs/en/documentation/getting-started/` both exist, so `../getting-started/` resolves
-  differently depending on the linking file's depth. Always resolve against the real file.
+  `docs/en/documentation/getting-started/` both exist, so `../getting-started/` resolves differently
+  depending on the linking file's depth. Always resolve against the real file.
 - **Aliases get forgotten.** The Dataplex to Knowledge Catalog rename added `aliases:` across ~23
   files, but later moves (the Groups docs relocation, the SDK page redirects) added none. Treat a
   missing alias on a rename as an oversight to raise, not a decision already made.
