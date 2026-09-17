@@ -421,6 +421,9 @@ steps:
       - "publish-npm-to-ar"
     env:
       - "BUILD_ID=$BUILD_ID"
+      - "EXIT_GATE_PROJECT=$_EXIT_GATE_PROJECT"
+      - "EXIT_GATE_MANIFEST_BUCKET=$_EXIT_GATE_MANIFEST_BUCKET"
+      - "PUSH_TO_EXIT_GATES=$_PUSH_TO_EXIT_GATES"
     script: |
       #!/usr/bin/env bash
       bash .ci/trigger_exit_gate.sh npm
@@ -443,6 +446,9 @@ steps:
       - "publish-pypi-to-ar"
     env:
       - "BUILD_ID=$BUILD_ID"
+      - "EXIT_GATE_PROJECT=$_EXIT_GATE_PROJECT"
+      - "EXIT_GATE_MANIFEST_BUCKET=$_EXIT_GATE_MANIFEST_BUCKET"
+      - "PUSH_TO_EXIT_GATES=$_PUSH_TO_EXIT_GATES"
     script: |
       #!/usr/bin/env bash
       bash .ci/trigger_exit_gate.sh pypi
@@ -469,3 +475,6 @@ artifacts:
   oci:
     - file: '/workspace/image.tar'
       registry_path: '${_DOCKER_URI}'
+  _EXIT_GATE_PROJECT: "mcp-toolbox"
+  _EXIT_GATE_MANIFEST_BUCKET: "oss-exit-gate-prod-projects-bucket"
+  _PUSH_TO_EXIT_GATES: "false"
