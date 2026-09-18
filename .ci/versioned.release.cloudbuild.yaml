@@ -32,6 +32,7 @@ steps:
         --build-arg BUILD_TYPE=container.release \
         --build-arg COMMIT_SHA=$(git rev-parse --short HEAD) \
         $TAGS \
+        --provenance=false \
         --output=type=oci,dest=/workspace/image.tar .
 
   - id: "install-dependencies"
