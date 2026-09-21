@@ -16,8 +16,6 @@ is unset, so URLs are pretty.
 | `docs/en/documentation/_index.md` | `/documentation/` |
 | `docs/en/integrations/postgres/source.md` | `/integrations/postgres/source/` |
 
-The `aliases:` frontmatter on the Knowledge Catalog pages confirms it: site-absolute, no `/en/`.
-
 ## The canonical link form
 
 File-relative with the `.md` extension, per the authoritative `DEVELOPER.md`. One string satisfies
@@ -25,11 +23,6 @@ both checkers: lychee resolves it as a filesystem path, Hugo resolves it to the 
 
 - Directory-style (`](../mcp-apps/)`) renders in Hugo, fails lychee.
 - Site-absolute (`](/reference/cli/)`) passes lychee, breaks on versioned deploys.
-
-Counts drift, so run the skill's greps rather than trusting numbers here. Rough orientation at the
-time of writing: file-relative `.md` leads directory-style by about 4:1, site-absolute links are in
-single digits, `{{< relref >}}` is unused, and the only two `{{< ref >}}` usages are in the
-Firestore validate-rules page.
 
 ## Why site-absolute links leak across versions
 
